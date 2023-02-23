@@ -1,0 +1,31 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main ] # Trigger the workflow on a push to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Use the latest version of Ubuntu as the runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2 # Check out the code from the repository
+
+      - name: Build Docker images
+        run: docker-compose build # Build the Docker images using docker-compose
+
+      - name: Push Docker images
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Use the Docker username from a GitHub secret
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }} # Use the Docker password from a GitHub secret
+        run: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD # Log in to the Docker registry
+          docker-compose push # Push the Docker images to the registry
+
+      - name: Deploy to Kubernetes
+        uses: appleboy/kubectl-action@v1.1.1 # Use the appleboy/kubectl-action action to deploy to Kubernetes
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }} # Use the Kubernetes configuration from a GitHub secret
+          commands: |
+            kubectl apply -f kubernetes/ # Apply the Kubernetes YAML files
