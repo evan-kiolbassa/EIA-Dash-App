@@ -1,0 +1,65 @@
+version: '3'
+services:
+  spark-master:
+    build: ./spark-master
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - spark-network
+  spark-worker-1:
+    build: ./spark-worker
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+  spark-worker-2:
+    build: ./spark-worker
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+  spark-worker-3:
+    build: ./spark-worker
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - spark-network
+  webserver:
+    image: puckel/docker-airflow:2.0.2
+    restart: always
+    depends_on:
+      - postgres
+      - spark-master
+    environment:
+      - LOAD_EX=n
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+    networks:
+      - spark-network
+  scheduler:
+    image: puckel/docker-airflow:2.0.2
+    restart: always
+    depends_on:
+      - postgres
+      - spark-master
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+    networks:
+      - spark-network
+networks:
+  spark-network:
+    driver: bridge
