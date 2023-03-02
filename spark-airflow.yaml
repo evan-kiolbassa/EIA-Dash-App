@@ -1,104 +1,29 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: apps/v1 # API version for Kubernetes Deployment
+kind: Deployment # Kind of Kubernetes resource we are creating
 metadata:
-  name: airflow-webserver
-  labels:
-    app: airflow
+  name: dash-pyspark-cassandra-airflow # Name of the Deployment
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: airflow
-      tier: webserver
+      app: dash-pyspark-cassandra-airflow # Select all pods with the 'app' label set to 'dash-pyspark-cassandra-airflow'
+  replicas: 1 # Number of replicas of the pod
   template:
     metadata:
       labels:
-        app: airflow
-        tier: webserver
+        app: dash-pyspark-cassandra-airflow # Apply the 'app' label to the pod template
     spec:
       containers:
-        - name: webserver
-          image: puckel/docker-airflow:2.0.2
-          command: ["webserver"]
+        - name: dash # Name of the container
+          image: dash-pyspark-cassandra-airflow:latest # Docker image to use for the container
+          imagePullPolicy: IfNotPresent # When to pull the Docker image
           ports:
-            - containerPort: 8080
-          env:
-            - name: LOAD_EX
-              value: "n"
-          volumeMounts:
-            - name: airflow-dags
-              mountPath: /usr/local/airflow/dags
-      volumes:
-        - name: airflow-dags
-          configMap:
-            name: airflow-dags
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: airflow-webserver
-  labels:
-    app: airflow
-spec:
-  type: NodePort
-  ports:
-    - name: web
-      port: 8080
-      targetPort: 8080
-  selector:
-    app: airflow
-    tier: webserver
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: airflow-scheduler
-  labels:
-    app: airflow
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: airflow
-      tier: scheduler
-  template:
-    metadata:
-      labels:
-        app: airflow
-        tier: scheduler
-    spec:
-      containers:
-        - name: scheduler
-          image: puckel/docker-airflow:2.0.2
-          command: ["scheduler"]
-          env:
-            - name: LOAD_EX
-              value: "n"
-          volumeMounts:
-            - name: airflow-dags
-              mountPath: /usr/local/airflow/dags
-      volumes:
-        - name: airflow-dags
-          configMap:
-            name: airflow-dags
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: airflow-scheduler
-  labels:
-    app: airflow
-spec:
-  ports:
-    - name: scheduler
-      port: 5555
-      targetPort: 5555
-  selector:
-    app: airflow
-    tier: scheduler
+            - containerPort: 8050 # Port on which the Dash app will listen
+        - name: pyspark # Name of the container
+          image: dash-pyspark-cassandra-airflow:latest # Docker image to use for the container
+          imagePullPolicy: IfNotPresent # When to pull the Docker image
+        - name: cassandra # Name of the container
+          image: cassandra:latest # Docker image to use for the container
+          imagePullPolicy: IfNotPresent # When to pull the Docker image
+        - name: airflow # Name of the container
+          image: apache/airflow:latest # Docker image to use for the container
+          imagePullPolicy: IfNotPresent # When to pull the Docker image

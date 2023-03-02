@@ -1,65 +1,46 @@
-version: '3'
+version: "3.9"
+
 services:
-  spark-master:
-    build: ./spark-master
+  # Cassandra service
+  cassandra:
+    image: my-cassandra:latest
+    container_name: cassandra
     ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    networks:
-      - spark-network
-  spark-worker-1:
-    build: ./spark-worker
-    depends_on:
-      - spark-master
-    networks:
-      - spark-network
-  spark-worker-2:
-    build: ./spark-worker
-    depends_on:
-      - spark-master
-    networks:
-      - spark-network
-  spark-worker-3:
-    build: ./spark-worker
-    depends_on:
-      - spark-master
-    networks:
-      - spark-network
-  postgres:
-    image: postgres
-    environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
-    networks:
-      - spark-network
-  webserver:
-    image: puckel/docker-airflow:2.0.2
+      - "9042:9042"  # Port mapping to make Cassandra accessible from the host
     restart: always
+
+  # PySpark service
+  spark:
+    image: my-spark:latest
+    container_name: spark
     depends_on:
-      - postgres
-      - spark-master
+      - cassandra  # Spark service depends on Cassandra service to be up and running
     environment:
-      - LOAD_EX=n
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_APPLICATION_PYTHON_LOCATION=/app/your_spark_application.py
+      - SPARK_APPLICATION_ARGS="arg1 arg2"  # Arguments to pass to the Spark application
+    volumes:
+      - ./app:/app  # Mount the local app folder into the container
+    restart: always
+
+  # Airflow service
+  airflow:
+    image: my-airflow:latest
+    container_name: airflow
+    depends_on:
+      - spark  # Airflow service depends on Spark service to be up and running
+      - cassandra  # Airflow service also depends on Cassandra service to be up and running
     ports:
-      - "8080:8080"
-    volumes:
-      - ./dags:/usr/local/airflow/dags
-    networks:
-      - spark-network
-  scheduler:
-    image: puckel/docker-airflow:2.0.2
+      - "8080:8080"  # Port mapping to make Airflow accessible from the host
     restart: always
+
+  # Plotly Dash service
+  dash:
+    image: my-dash:latest
+    container_name: dash
     depends_on:
-      - postgres
-      - spark-master
-    volumes:
-      - ./dags:/usr/local/airflow/dags
-    networks:
-      - spark-network
-networks:
-  spark-network:
-    driver: bridge
+      - spark  # Dash service depends on Spark service to be up and running
+      - cassandra  # Dash service also depends on Cassandra service to be up and running
+    ports:
+      - "8050:8050"  # Port mapping to make Dash accessible from the host
+    restart: always

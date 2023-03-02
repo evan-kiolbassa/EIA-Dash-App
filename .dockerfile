@@ -1,22 +1,25 @@
-FROM puckel/docker-airflow:2.0.2
+FROM ubuntu:20.04
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
- && rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get -y install python3 python3-pip openjdk-8-jre wget
 
-# Install pyspark
-RUN pip install pyspark
+# Install PySpark and dependencies
+RUN pip3 install pyspark
 
-# Set environment variables
-ENV SPARK_HOME=/usr/local/spark
-ENV PATH=$PATH:$SPARK_HOME/bin
-ENV PYSPARK_PYTHON=python3
-ENV AIRFLOW_HOME=/usr/local/airflow
+# Install Apache Cassandra
+RUN echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list
+RUN wget -q -O - https://www.apache.org/dist/cassandra/KEYS | apt-key add -
+RUN apt-get update && apt-get -y install cassandra
 
-# Copy Spark scripts and Airflow DAGs
-COPY spark-scripts/ /usr/local/spark/scripts/
-COPY airflow-dags/ /usr/local/airflow/dags/
+# Install Airflow
+RUN pip3 install apache-airflow
 
-# Set command to run services
-CMD ["webserver"]
+# Install Plotly Dash and dependencies
+RUN pip3 install dash pandas
+
+# Expose Airflow port
+EXPOSE 8080
+
+# Start Cassandra and Airflow services
+CMD service cassandra start && airflow webserver -p 8080
