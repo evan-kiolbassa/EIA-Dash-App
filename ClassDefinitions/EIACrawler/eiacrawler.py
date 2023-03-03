@@ -2,7 +2,7 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 from ClassDefinitions.BST.BinarySearchTree import TreeNode, BinarySearchTree
 
-class EIACrawler((scrapy.Spider)):
+class EIACrawler(scrapy.Spider):
     """
     A web crawler for the EIA API.
     """
@@ -17,7 +17,7 @@ class EIACrawler((scrapy.Spider)):
         """
         self.api_key = api_key
         self.tree = BinarySearchTree()
-        super(EIACrawler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.start_urls = [
         f"https://api.eia.gov/category/?api_key={self.api_key}&all=true"
     ]
@@ -37,7 +37,7 @@ class EIACrawler((scrapy.Spider)):
 
             self.tree.balance()
         else:
-            raise ValueError("Failed to parse API response: 'category' not found")
+            raise ValueError("Failed to palrse API response: 'category' not found")
 
     def crawl(self):
         """
@@ -127,3 +127,4 @@ class EIACrawler((scrapy.Spider)):
             raise ValueError("Failed to parse API response: 'category' or 'childcategories' not found")
 
         return self.meta["series_ids"]
+

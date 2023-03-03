@@ -3,7 +3,8 @@ version: "3.9"
 services:
   # Cassandra service
   cassandra:
-    image: my-cassandra:latest
+    build: ./cassandra
+    image: cassandra:latest
     container_name: cassandra
     ports:
       - "9042:9042"  # Port mapping to make Cassandra accessible from the host
@@ -11,7 +12,8 @@ services:
 
   # PySpark service
   spark:
-    image: my-spark:latest
+    build: ./spark
+    image: apache/spark:latest
     container_name: spark
     depends_on:
       - cassandra  # Spark service depends on Cassandra service to be up and running
@@ -25,7 +27,8 @@ services:
 
   # Airflow service
   airflow:
-    image: my-airflow:latest
+    build: ./airflow
+    image: apache/airflow:latest
     container_name: airflow
     depends_on:
       - spark  # Airflow service depends on Spark service to be up and running
@@ -34,13 +37,15 @@ services:
       - "8080:8080"  # Port mapping to make Airflow accessible from the host
     restart: always
 
-  # Plotly Dash service
-  dash:
-    image: my-dash:latest
-    container_name: dash
-    depends_on:
-      - spark  # Dash service depends on Spark service to be up and running
-      - cassandra  # Dash service also depends on Cassandra service to be up and running
+  web:
+    build: ./web
+    container_name: web
+    command: gunicorn app:server -b 0.0.0.0:8050
     ports:
-      - "8050:8050"  # Port mapping to make Dash accessible from the host
+      - "8050:8050"
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+    volumes:
+      - .:/app
     restart: always
