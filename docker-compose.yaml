@@ -3,23 +3,25 @@ version: "3.9"
 services:
   # Cassandra service
   cassandra:
-    build: ./cassandra
+    build: ./docker/cassandra
     image: cassandra:latest
     container_name: cassandra
     ports:
       - "9042:9042"  # Port mapping to make Cassandra accessible from the host
     restart: always
+    environment:
+      - CASSANDRA_START_RPC=true
 
   # PySpark service
   spark:
-    build: ./spark
+    build: ./docker/spark
     image: apache/spark:latest
     container_name: spark
     depends_on:
       - cassandra  # Spark service depends on Cassandra service to be up and running
     environment:
       - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_APPLICATION_PYTHON_LOCATION=/app/your_spark_application.py
+      - SPARK_APPLICATION_PYTHON_LOCATION=/app/app.py
       - SPARK_APPLICATION_ARGS="arg1 arg2"  # Arguments to pass to the Spark application
     volumes:
       - ./app:/app  # Mount the local app folder into the container
@@ -27,7 +29,7 @@ services:
 
   # Airflow service
   airflow:
-    build: ./airflow
+    build: ./docker/airflow
     image: apache/airflow:latest
     container_name: airflow
     depends_on:
@@ -36,9 +38,16 @@ services:
     ports:
       - "8080:8080"  # Port mapping to make Airflow accessible from the host
     restart: always
+    environment:
+      - EXECUTOR=Local
+      - LOAD_EXAMPLES=yes
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
 
   web:
-    build: ./web
+    build: ./docker/web
     container_name: web
     command: gunicorn app:server -b 0.0.0.0:8050
     ports:
@@ -47,5 +56,5 @@ services:
       - FLASK_APP=app.py
       - FLASK_ENV=development
     volumes:
-      - .:/app
+      - ./app:/app
     restart: always

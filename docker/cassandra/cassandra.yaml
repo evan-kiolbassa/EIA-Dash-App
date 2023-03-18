@@ -1,0 +1,28 @@
+# Cassandra configuration file
+
+# Basic cluster settings
+cluster_name: 'My Cluster'
+num_tokens: 256
+seed_provider:
+  - class_name: org.apache.cassandra.locator.SimpleSeedProvider
+    parameters:
+      - seeds: "192.168.1.1,192.168.1.2"
+
+# Listen and RPC addresses
+listen_address: localhost
+rpc_address: localhost
+broadcast_rpc_address: 1.2.3.4
+
+# Data file directories
+data_file_directories:
+  - /var/lib/cassandra/data
+
+# Commit log directory
+commitlog_directory: /var/lib/cassandra/commitlog
+
+# Disk failure policy
+disk_failure_policy: stop
+
+# Memory settings
+heap_size_mb: 1024
+max_heap_size_mb: 1024
