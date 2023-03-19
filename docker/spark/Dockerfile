@@ -1,14 +1,16 @@
 FROM apache/spark:latest
 
+# Update packages and install Python 3 and pip3
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
+    ln -s /usr/bin/pip3 /usr/bin/pip
+
 # Set environment variables
 ENV PYSPARK_PYTHON=python3
 ENV PYTHONUNBUFFERED=1
 ENV SPARK_HOME=/usr/local/spark
 ENV PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
-
-# Copy Python dependencies and install them
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt
 
 # Copy application code
 COPY . /app

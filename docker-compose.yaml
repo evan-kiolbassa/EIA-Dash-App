@@ -15,28 +15,27 @@ services:
   # PySpark service
   spark:
     build: ./docker/spark
-    image: apache/spark:latest
+    image: my-spark:latest
     container_name: spark
     depends_on:
-      - cassandra  # Spark service depends on Cassandra service to be up and running
+      - cassandra
     environment:
       - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_APPLICATION_PYTHON_LOCATION=/app/app.py
-      - SPARK_APPLICATION_ARGS="arg1 arg2"  # Arguments to pass to the Spark application
+      - SPARK_APPLICATION_PYTHON_LOCATION=/app/my_spark_app.py
+      - SPARK_APPLICATION_ARGS="arg1 arg2"
     volumes:
-      - ./app:/app  # Mount the local app folder into the container
+      - ./app:/app
     restart: always
 
-  # Airflow service
   airflow:
     build: ./docker/airflow
     image: apache/airflow:latest
     container_name: airflow
     depends_on:
-      - spark  # Airflow service depends on Spark service to be up and running
-      - cassandra  # Airflow service also depends on Cassandra service to be up and running
+      - spark
+      - cassandra
     ports:
-      - "8080:8080"  # Port mapping to make Airflow accessible from the host
+      - "8080:8080"
     restart: always
     environment:
       - EXECUTOR=Local
@@ -45,7 +44,10 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-
+    command: >
+      bash -c "airflow db init &&
+               airflow users create --username admin --password admin --firstname Admin --lastname Admin --role Admin --email admin@example.com &&
+               airflow webserver"
   web:
     build: ./docker/web
     container_name: web
