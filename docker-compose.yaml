@@ -1,18 +1,16 @@
 version: "3.9"
 
 services:
-  # Cassandra service
   cassandra:
     build: ./docker/cassandra
     image: cassandra:latest
     container_name: cassandra
     ports:
-      - "9042:9042"  # Port mapping to make Cassandra accessible from the host
+      - "9042:9042"
     restart: always
     environment:
       - CASSANDRA_START_RPC=true
 
-  # PySpark service
   spark:
     build: ./docker/spark
     image: my-spark:latest
