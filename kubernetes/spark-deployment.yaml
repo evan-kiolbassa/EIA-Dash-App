@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark
+  template:
+    metadata:
+      labels:
+        app: spark
+    spec:
+      containers:
+      - name: spark
+        image: my-spark:latest
+        ports:
+        - containerPort: 7077
+        env:
+        - name: SPARK_MASTER_URL
+          value: spark://spark:7077
+        - name: SPARK_APPLICATION_PYTHON_LOCATION
+          value: /app/my_spark_app.py
